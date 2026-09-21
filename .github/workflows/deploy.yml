@@ -29,38 +29,40 @@ jobs:
         env:
           NODE_ENV: production
 
-      - name: Sync .output to VPS via rsync
-        uses: easingthemes/ssh-deploy@v5.1.0
-        with:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          ARGS: "-rlgoDzvc -i --delete"
-          SOURCE: ".output/"
-          REMOTE_HOST: ${{ secrets.SSH_HOST }}
-          REMOTE_USER: ${{ secrets.SSH_USER }}
-          REMOTE_PORT: ${{ secrets.SSH_PORT || 22 }}
-          TARGET: "${{ secrets.APP_DIR || '/root/jmc' }}/.output"
-          EXCLUDE: "/.git/, /node_modules/"
+      - name: Compress build output
+        run: |
+          tar -czf output.tar.gz .output
+      - name: Transfer and Extract to VPS
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          PORT="${{ secrets.SSH_PORT || '22' }}"
+          USER="${{ secrets.SSH_USER }}"
+          HOST="${{ secrets.SSH_HOST }}"
+          TARGET_DIR="${{ secrets.APP_DIR || '/root/jmc' }}"
 
-      - name: Restart PM2 on VPS
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT || 22 }}
-          script: |
-            set -e
-            APP_DIR="${{ secrets.APP_DIR || '/root/jmc' }}"
-            cd "$APP_DIR"
+          echo "Ensuring remote directory exists..."
+          ssh -o StrictHostKeyChecking=no -p "$PORT" -i ~/.ssh/id_deploy "$USER@$HOST" "mkdir -p $TARGET_DIR"
 
-            PM2_BIN=$(which pm2 || echo "/root/.bun/bin/pm2" || echo "pm2")
-            echo "Reloading application with PM2..."
-            if [ -x "$PM2_BIN" ] || command -v pm2 >/dev/null 2>&1; then
+          echo "Streaming and extracting output.tar.gz to VPS..."
+          ssh -o StrictHostKeyChecking=no -p "$PORT" -i ~/.ssh/id_deploy "$USER@$HOST" "rm -rf $TARGET_DIR/.output"
+          ssh -o StrictHostKeyChecking=no -p "$PORT" -i ~/.ssh/id_deploy "$USER@$HOST" "tar -xzf - -C $TARGET_DIR" < output.tar.gz
+
+          echo "Restarting application with PM2..."
+          ssh -o StrictHostKeyChecking=no -p "$PORT" -i ~/.ssh/id_deploy "$USER@$HOST" "bash -l -c '
+            cd $TARGET_DIR
+            if command -v pm2 >/dev/null 2>&1; then
               pm2 reload jmc-app || pm2 start .output/server/index.mjs --name jmc-app || pm2 restart jmc-app
               pm2 save
+            elif [ -x /root/.bun/bin/pm2 ]; then
+              /root/.bun/bin/pm2 reload jmc-app || /root/.bun/bin/pm2 start .output/server/index.mjs --name jmc-app || /root/.bun/bin/pm2 restart jmc-app
+              /root/.bun/bin/pm2 save
             else
-              echo "PM2 not found. Please ensure PM2 is installed globally on the VPS."
+              echo \"PM2 not found in PATH or standard location.\"
             fi
+          '"
 
-            echo "Deployment finished successfully!"
+          rm -f ~/.ssh/id_deploy
+          echo "Deployment finished successfully!"
 
