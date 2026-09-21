@@ -1,5 +1,3 @@
-// plugins/apexcharts.client.js
-// Registrasi vue3-apexcharts sebagai komponen global
 
 import VueApexCharts from 'vue3-apexcharts'
 

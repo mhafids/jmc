@@ -2,6 +2,7 @@
 definePageMeta({
   layout: "auth",
   title: "Login",
+  alias: ["/login", "/auth/login"],
 });
 
 import LoginForm from "~/features/auth/Login/components/LoginForm.vue";
@@ -16,7 +17,7 @@ onMounted(() => {
 
 <template>
   <div class="box col-md-8 p-4">
-    <!-- Logo -->
+
     <div class="d-flex gap-3 mb-4 align-items-center">
       <div class="logo">
         <img
@@ -33,9 +34,10 @@ onMounted(() => {
       </div>
     </div>
 
-    <p>Selamat Datang, silahkan masukkan username dan password anda!</p>
+    <p class="text-secondary mb-4">
+      Selamat Datang, silahkan masukkan username, email, atau no. handphone dan password anda!
+    </p>
 
-    <!-- Login Form -->
     <LoginForm />
   </div>
 </template>

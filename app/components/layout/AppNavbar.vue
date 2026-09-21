@@ -2,7 +2,7 @@
   <div class="sticky-top" id="navbar">
     <header class="navbar navbar-expand-md d-none d-lg-flex d-print-none">
       <div class="container-xl">
-        <!-- Sidebar Toggler -->
+
         <button
           class="navbar-toggler sidebar-toggler"
           type="button"
@@ -12,9 +12,8 @@
           <span class="navbar-toggler-icon"></span>
         </button>
 
-        <!-- Search (opsional) -->
         <div class="navbar-nav flex-row order-md-last">
-          <!-- Dark Mode Toggle -->
+
           <div class="nav-item d-none d-md-flex me-3">
             <div class="btn-list">
               <button
@@ -28,7 +27,6 @@
             </div>
           </div>
 
-          <!-- Notification -->
           <div class="nav-item dropdown me-2">
             <a
               href="#"
@@ -67,7 +65,6 @@
             </div>
           </div>
 
-          <!-- User Profile Dropdown -->
           <div class="nav-item dropdown">
             <a
               href="#"

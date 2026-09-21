@@ -4,7 +4,7 @@
     data-bs-theme="dark"
   >
     <div class="container-fluid px-0 justify-content-start">
-      <!-- BRAND -->
+
       <h1 class="navbar-brand text-white ms-3 ms-lg-0 gap-3">
         <div class="logo">
           <img src="~/assets/images/logo/logo_jmc.png" alt="Logo" height="15" />
@@ -23,7 +23,7 @@
         class="offcanvas offcanvas-start px-lg-3"
         tabindex="-1"
       >
-        <!-- HEADER -->
+
         <div class="offcanvas-header">
           <div class="d-flex gap-3 align-items-center">
             <div class="image">
@@ -48,13 +48,12 @@
           />
         </div>
 
-        <!-- BODY -->
         <div
           class="offcanvas-body p-3 p-lg-0 flex-column flex-grow-1 overflow-auto"
         >
           <ul class="navbar-nav align-items-start pt-lg-3">
-            <template v-for="item in menuItems">
-              <!-- Menu dengan children (dropdown) -->
+            <template v-for="item in filteredMenuItems">
+
               <li
                 :key="item.title"
                 v-if="item.children"
@@ -100,7 +99,6 @@
                 </div>
               </li>
 
-              <!-- Menu biasa (tanpa children) -->
               <li v-else class="nav-item" :key="item.title">
                 <NuxtLink
                   :to="item.to"
@@ -122,28 +120,56 @@
 </template>
 
 <script setup>
-import { menuItems } from "~/data/menu.js";
+import { menuIconMap } from "~/data/menu.js";
+import { IconCircle } from "@tabler/icons-vue";
 
 const appName = "Admin";
 const route = useRoute();
 const config = useRuntimeConfig();
+const { user, isAuthenticated } = useAuth();
 
-// Dropdown yang sedang terbuka
+const { data: apiMenuData, refresh: refreshMenu } = await useFetch('/api/menu', {
+  lazy: true,
+  server: false,
+  watch: [() => user.value?.roleId],
+});
+
+const resolveIcon = (iconKey, code) => {
+  if (typeof iconKey === 'object' && iconKey !== null) return iconKey;
+  if (iconKey && menuIconMap[iconKey]) return menuIconMap[iconKey];
+  if (code && menuIconMap[code]) return menuIconMap[code];
+  return IconCircle;
+};
+
+const filteredMenuItems = computed(() => {
+  if (apiMenuData.value?.success && Array.isArray(apiMenuData.value?.data)) {
+    return apiMenuData.value.data.map((item) => ({
+      ...item,
+      icon: resolveIcon(item.icon, item.code),
+      children: item.children
+        ? item.children.map((child) => ({
+            ...child,
+            icon: resolveIcon(child.icon, child.code),
+          }))
+        : undefined,
+    }));
+  }
+
+  return [];
+});
+
 const openDropdowns = ref([]);
 
-// Cek apakah route aktif (exact match untuk '/', startsWith untuk lainnya)
 const isActive = (path) => {
   if (path === "/") return route.path === "/";
   return route.path === path || route.path.startsWith(path + "/");
 };
 
-// Cek apakah salah satu child aktif
 const isParentActive = (item) => {
   if (!item.children) return false;
   return item.children.some((child) => isActive(child.to));
 };
 
-// Toggle dropdown manual
 const toggleDropdown = (title) => {
   const idx = openDropdowns.value.indexOf(title);
   if (idx === -1) {
@@ -153,11 +179,10 @@ const toggleDropdown = (title) => {
   }
 };
 
-// Otomatis buka dropdown jika ada child yang aktif
 watch(
-  () => route.path,
+  [() => route.path, filteredMenuItems],
   () => {
-    menuItems.forEach((item) => {
+    filteredMenuItems.value.forEach((item) => {
       if (item.children && isParentActive(item)) {
         if (!openDropdowns.value.includes(item.title)) {
           openDropdowns.value.push(item.title);

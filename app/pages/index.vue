@@ -8,6 +8,29 @@ useSeoMeta({
 });
 
 import { totalStatistik, dataPegawaiTerbaru } from "@/data/dashboard.js";
+import { IconAlertTriangle, IconX } from "@tabler/icons-vue";
+
+const route = useRoute();
+
+const moduleNameMap = {
+  roles: 'Kelola Role',
+  users: 'Kelola User',
+  employees: 'Data Pegawai',
+  attendances: 'Presensi',
+  transport_settings: 'Setting Tunjangan Transport',
+  transport_allowances: 'Tunjangan Transport',
+  activity_logs: 'Log Aktivitas',
+};
+
+const forbiddenMessage = computed(() => {
+  if (route.query.error === 'forbidden') {
+    const mod = String(route.query.module || '').toLowerCase();
+    const modName = moduleNameMap[mod] || mod.toUpperCase() || 'terkait';
+    return `Akses Ditolak (403 Forbidden): Anda tidak memiliki wewenang untuk mengakses modul ${modName}.`;
+  }
+  return null;
+});
+const showForbiddenAlert = ref(true);
 
 const statusPegawaiSeries = [75, 30, 19];
 const genderPegawaiSeries = [100, 24];
@@ -35,7 +58,20 @@ const genderPegawaiOptions = {
 
 <template>
   <div class="row g-3">
-    <!-- Card Greeting -->
+
+    <div class="col-12" v-if="forbiddenMessage && showForbiddenAlert">
+      <div class="alert alert-danger alert-dismissible d-flex align-items-center mb-0" role="alert">
+        <div class="me-3">
+          <IconAlertTriangle :size="24" class="text-danger" />
+        </div>
+        <div class="flex-grow-1">
+          <h4 class="alert-title mb-1">Akses Ditolak</h4>
+          <div class="text-secondary">{{ forbiddenMessage }}</div>
+        </div>
+        <button type="button" class="btn-close" aria-label="Close" @click="showForbiddenAlert = false"></button>
+      </div>
+    </div>
+
     <div class="col-md-3">
       <div class="card bg-dark h-100 position-relative">
         <div class="card-body">
@@ -58,7 +94,7 @@ const genderPegawaiOptions = {
     </div>
     <div class="col-md-9">
       <div class="row g-3">
-        <!-- Card Total -->
+
         <div class="col-12">
           <div class="card">
             <div class="card-body">
@@ -98,7 +134,7 @@ const genderPegawaiOptions = {
             </div>
           </div>
         </div>
-        <!-- Chart Total Pegawai Berdasarkan Status Kontrak -->
+
         <div class="col-md-6">
           <div class="card">
             <div class="card-body">
@@ -116,7 +152,7 @@ const genderPegawaiOptions = {
             </div>
           </div>
         </div>
-        <!-- Chart Total Pegawai Berdasarkan Gender -->
+
         <div class="col-md-6">
           <div class="card">
             <div class="card-body">
@@ -135,7 +171,6 @@ const genderPegawaiOptions = {
       </div>
     </div>
 
-    <!-- Pegawai Terbaru -->
     <div class="col-12">
       <div class="card">
         <div class="card-header">

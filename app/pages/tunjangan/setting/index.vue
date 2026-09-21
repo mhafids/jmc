@@ -1,7 +1,7 @@
 <template>
   <div class="row">
-    <div class="col-md-6">
-      <SettingFrom />
+    <div class="col-lg-8 col-md-10">
+      <SettingForm />
     </div>
   </div>
 </template>
@@ -15,5 +15,5 @@ useSeoMeta({
   title: "Setting Tunjangan Transport",
 });
 
-import SettingFrom from "~/features/Tunjangan/components/SettingForm.vue";
+import SettingForm from "~/features/Tunjangan/components/SettingForm.vue";
 </script>

@@ -16,7 +16,6 @@
 <script setup>
 const route = useRoute()
 
-// Mapping path ke label yang lebih manusiawi
 const pathLabels = {
   '': 'Home',
   'pegawai': 'Data Pegawai',

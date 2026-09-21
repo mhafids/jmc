@@ -25,7 +25,7 @@
           data-bs-placement="bottom"
           type="button"
         >
-          <!-- Download SVG icon from http://tabler-icons.io/i/moon -->
+
           <svg
             xmlns="http://www.w3.org/2000/svg"
             class="icon"
@@ -52,7 +52,7 @@
           data-bs-placement="bottom"
           type="button"
         >
-          <!-- Download SVG icon from http://tabler-icons.io/i/moon -->
+
           <svg
             xmlns="http://www.w3.org/2000/svg"
             class="icon"
@@ -122,7 +122,7 @@
                     </div>
                     <div class="col-auto">
                       <a href="#" class="list-group-item-actions">
-                        <!-- Download SVG icon from http://tabler-icons.io/i/star -->
+
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           class="icon text-muted"
@@ -158,7 +158,7 @@
                     </div>
                     <div class="col-auto">
                       <a href="#" class="list-group-item-actions show">
-                        <!-- Download SVG icon from http://tabler-icons.io/i/star -->
+
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           class="icon text-yellow"
@@ -193,7 +193,7 @@
                     </div>
                     <div class="col-auto">
                       <a href="#" class="list-group-item-actions">
-                        <!-- Download SVG icon from http://tabler-icons.io/i/star -->
+
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           class="icon text-muted"
@@ -230,7 +230,7 @@
                     </div>
                     <div class="col-auto">
                       <a href="#" class="list-group-item-actions">
-                        <!-- Download SVG icon from http://tabler-icons.io/i/star -->
+
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           class="icon text-muted"
@@ -263,25 +263,29 @@
             class="nav-link d-flex lh-1 text-reset p-0 dropdown-toggle"
             data-bs-toggle="dropdown"
           >
-            <span class="bg-primary text-white avatar rounded-circle">
-              {{ getInitials("User Name") }}
+            <span class="bg-primary text-white avatar rounded-circle fw-bold">
+              {{ initials }}
             </span>
             <div class="d-none d-xl-block ps-2">
-              <div class="fw-bold">USER NAME</div>
-              <div class="mt-1 small text-primary">USER ROLE</div>
+              <div class="fw-bold">{{ currentUser?.name || "User Name" }}</div>
+              <div class="mt-1 small text-primary">{{ currentUser?.roleName || currentUser?.jobTitle || "Role User" }}</div>
             </div>
           </a>
           <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-            <a href="?page=profile" class="dropdown-item"
-              ><i class="bi bi-person me-2"></i> My Profile</a
-            >
-            <a href="?page=change-password" class="dropdown-item"
-              ><i class="bi bi-key me-2"></i> Change Password</a
-            >
+            <NuxtLink to="/profile" class="dropdown-item">
+              <IconUser :size="18" class="me-2 text-muted" /> My Profile
+            </NuxtLink>
+            <NuxtLink to="/profile/change-password" class="dropdown-item">
+              <IconKey :size="18" class="me-2 text-muted" /> Change Password
+            </NuxtLink>
             <div class="dropdown-divider"></div>
-            <a href="logout.php" class="dropdown-item text-danger"
-              ><i class="bi bi-box-arrow-right me-2"></i> Logout</a
+            <button
+              type="button"
+              class="dropdown-item text-danger cursor-pointer"
+              @click="handleLogout"
             >
+              <IconLogout :size="18" class="me-2 text-danger" /> Logout
+            </button>
           </div>
         </div>
       </div>
@@ -290,6 +294,33 @@
 </template>
 
 <script setup>
+import { IconUser, IconKey, IconLogout } from '@tabler/icons-vue';
+
 const { toggleTheme } = useTheme();
 const { toggleSidebar } = useSidebar();
+const { user, fetchUser, logout } = useAuth();
+
+onMounted(async () => {
+  if (!user.value) {
+    await fetchUser();
+  }
+});
+
+const currentUser = computed(() => user.value);
+
+const initials = computed(() => {
+  const name = currentUser.value?.name || "User Name";
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+});
+
+const handleLogout = async () => {
+  if (confirm("Apakah Anda yakin ingin keluar dari sistem?")) {
+    await logout('manual');
+  }
+};
 </script>
