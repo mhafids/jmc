@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    name: Build & Compile
+  build-and-deploy:
+    name: Build and Deploy to VPS
     runs-on: ubuntu-latest
 
     steps:
@@ -29,13 +29,19 @@ jobs:
         env:
           NODE_ENV: production
 
-  deploy:
-    name: Deploy to VPS
-    needs: build
-    runs-on: ubuntu-latest
+      - name: Sync .output to VPS via rsync
+        uses: easingthemes/ssh-deploy@v5.1.0
+        with:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          ARGS: "-rlgoDzvc -i --delete"
+          SOURCE: ".output/"
+          REMOTE_HOST: ${{ secrets.SSH_HOST }}
+          REMOTE_USER: ${{ secrets.SSH_USER }}
+          REMOTE_PORT: ${{ secrets.SSH_PORT || 22 }}
+          TARGET: "${{ secrets.APP_DIR || '/root/jmc' }}/.output"
+          EXCLUDE: "/.git/, /node_modules/"
 
-    steps:
-      - name: Deploy to VPS via SSH
+      - name: Restart PM2 on VPS
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -45,31 +51,16 @@ jobs:
           script: |
             set -e
             APP_DIR="${{ secrets.APP_DIR || '/root/jmc' }}"
-            echo "Navigating to app directory: $APP_DIR"
             cd "$APP_DIR"
 
-            echo "Pulling latest changes..."
-            git fetch origin main
-            git reset --hard origin/main
-
-            echo "Installing dependencies..."
-            if command -v bun >/dev/null 2>&1; then
-              bun install
-              echo "Building Nuxt app..."
-              bun run build
-            elif command -v npm >/dev/null 2>&1; then
-              npm install
-              echo "Building Nuxt app..."
-              npm run build
-            fi
-
-            echo "Restarting application with PM2..."
-            PM2_BIN=$(which pm2 || echo "/root/.bun/bin/pm2")
-            if [ -x "$PM2_BIN" ]; then
-              $PM2_BIN reload jmc-app || $PM2_BIN start .output/server/index.mjs --name jmc-app || $PM2_BIN restart 0
-              $PM2_BIN save
+            PM2_BIN=$(which pm2 || echo "/root/.bun/bin/pm2" || echo "pm2")
+            echo "Reloading application with PM2..."
+            if [ -x "$PM2_BIN" ] || command -v pm2 >/dev/null 2>&1; then
+              pm2 reload jmc-app || pm2 start .output/server/index.mjs --name jmc-app || pm2 restart jmc-app
+              pm2 save
             else
-              echo "PM2 not found, running directly or check configuration."
+              echo "PM2 not found. Please ensure PM2 is installed globally on the VPS."
             fi
 
             echo "Deployment finished successfully!"
+
