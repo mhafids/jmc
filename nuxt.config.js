@@ -14,11 +14,12 @@ export default defineNuxtConfig({
     captchaLength: Number(process.env.CAPTCHA_LENGTH || 5),
     rememberMeTtlSeconds: Number(process.env.AUTH_REMEMBER_ME_TTL_SECONDS || 86400),
     mailDriver: process.env.MAIL_DRIVER || "log",
+    mailtrapToken: process.env.MAILTRAP_TOKEN || "",
     smtpHost: process.env.SMTP_HOST || "",
     smtpPort: Number(process.env.SMTP_PORT || 2525),
     smtpUser: process.env.SMTP_USER || "",
     smtpPass: process.env.SMTP_PASS || "",
-    smtpFrom: process.env.SMTP_FROM || "no-reply@perusahaan.co.id",
+    smtpFrom: process.env.SMTP_FROM || "hello@demomailtrap.co",
     smtpFromName: process.env.SMTP_FROM_NAME || "Prototipe JMC Admin Security",
 
     public: {
